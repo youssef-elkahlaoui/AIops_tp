@@ -1,4 +1,0 @@
-watchdog
-requests
-faiss-cpu
-numpy

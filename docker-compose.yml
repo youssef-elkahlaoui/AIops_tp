@@ -1,61 +1,12 @@
-version: "3.8"
+version: '3.8'
+
 services:
-
-  rag-backend-v1:
-    build: ./backend
-    container_name: rag-backend-v1
-    environment:
-      - INDEX_PATH=/indices/v1
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GEMINI_EMBED_URL=${GEMINI_EMBED_URL}
-      - GEMINI_CHAT_URL=${GEMINI_CHAT_URL}
-    volumes:
-      - ./indices/v1:/indices/v1
-    ports:
-      - "8101:8101"
-
-  rag-backend-v2:
-    build: ./backend
-    container_name: rag-backend-v2
-    environment:
-      - INDEX_PATH=/indices/v2
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GEMINI_EMBED_URL=${GEMINI_EMBED_URL}
-      - GEMINI_CHAT_URL=${GEMINI_CHAT_URL}
-    volumes:
-      - ./indices/v2:/indices/v2
-    ports:
-      - "8102:8102"
-
-  router:
-    build: ./router
-    container_name: router
-    environment:
-      - ACTIVE_FILE=/data/active_version
-      - BACKEND_PORT_V1=8101
-      - BACKEND_PORT_V2=8102
-    volumes:
-      - ./data:/data
-    ports:
-      - "8000:8000"
-
-  builder:
-    build: ./builder
-    container_name: builder
-    environment:
-      - DATA_DIR=/data
-      - INDICES_DIR=/indices
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GEMINI_EMBED_URL=${GEMINI_EMBED_URL}
-      - ROUTER_URL=http://router:8000/activate
-    volumes:
-      - ./data:/data
-      - ./indices:/indices
-
-  ui:
-    build: ./ui
-    container_name: ui
-    environment:
-      - ROUTER_URL=http://router:8000
+  rag-app:
+    build: .
     ports:
       - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - ./app/data:/app/app/data  # Mount data volume for persistence/updates
+    restart: always

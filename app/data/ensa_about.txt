@@ -1,0 +1,29 @@
+# About ENSA Al Hoceima
+
+## History and Founding
+ENSA Al Hoceima (École Nationale des Sciences Appliquées d'Al Hoceima) was founded in 2008. The school was established as part of Morocco's national network of applied sciences schools to serve the Rif region.
+
+## Mission
+The mission of ENSA Al Hoceima is to train highly qualified engineers capable of meeting the technological and economic challenges of Morocco and the world. The school aims to provide excellence in engineering education, promote scientific research, and foster innovation and entrepreneurship among students.
+
+## University Affiliation
+ENSA Al Hoceima is part of Abdelmalek Essaâdi University.
+
+## Location
+The school is located in Al Hoceima, Morocco at the address: BP 03, Ajdir Al-Hoceima.
+
+## Engineering Departments
+ENSA Al Hoceima offers three main engineering programs:
+
+1. **Computer Engineering (Génie Informatique - GI)**: Focuses on software engineering, data science, and artificial intelligence (AI).
+
+2. **Civil Engineering (Génie Civil - GC)**: Focuses on construction, infrastructure, and urban planning.
+
+3. **Energy and Renewable Energy Engineering (GERE)**: Focuses on sustainable energy solutions and electrical systems.
+
+## Key Facts
+- Founded: 2008
+- Location: Al Hoceima, Morocco
+- University: Abdelmalek Essaâdi University
+- Type: Public Engineering School (École Nationale des Sciences Appliquées)
+- Programs: Computer Engineering, Civil Engineering, Energy Engineering
