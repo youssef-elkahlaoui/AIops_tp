@@ -119,21 +119,3 @@ def build_vector_store(data_path, db_path):
 
     st.success("🎉 MLOps Pipeline Finished Successfully!")
     return vector_store
-
-def reset_vector_store(db_path):
-    """Clears the existing vector store."""
-    import gc
-    import time
-    
-    if os.path.exists(db_path):
-        # Force garbage collection to release any file handles
-        gc.collect()
-        time.sleep(0.5)
-        
-        try:
-            shutil.rmtree(db_path)
-            st.warning("Vector Store cleared!")
-        except PermissionError:
-            st.error("Cannot delete database - it's currently in use. Please restart the app and try again.")
-            return
-    st.rerun()
