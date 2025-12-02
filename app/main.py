@@ -25,7 +25,7 @@ def get_data_folder_hash(data_path):
     files_found = []
     for root, dirs, files in os.walk(data_path):
         for file in sorted(files):
-            if file.endswith(('.txt', '.md')):
+            if file.endswith(('.txt', '.md', '.json')):
                 filepath = os.path.join(root, file)
                 files_found.append(file)
                 # Include filename and modification time in hash
@@ -93,7 +93,7 @@ with st.sidebar:
     
     # File Upload
     st.subheader("📂 Data Ingestion")
-    uploaded_files = st.file_uploader("Upload Knowledge Base (Supported: .txt, .md)", accept_multiple_files=True, type=['txt', 'md'])
+    uploaded_files = st.file_uploader("Upload Knowledge Base (Supported: .txt, .md, .json)", accept_multiple_files=True, type=['txt', 'md', 'json'])
     
     if uploaded_files:
         # Check if we already processed these files
@@ -123,7 +123,7 @@ with st.sidebar:
     st.subheader("📊 Status")
     
     # Data folder info
-    data_files = [f for f in os.listdir(DATA_PATH) if f.endswith(('.txt', '.md'))] if os.path.exists(DATA_PATH) else []
+    data_files = [f for f in os.listdir(DATA_PATH) if f.endswith(('.txt', '.md', '.json'))] if os.path.exists(DATA_PATH) else []
     st.caption(f"**Data Files:** {len(data_files)}")
     
     # Vector store status
@@ -186,17 +186,35 @@ elif current_hash != "empty":
 # Initialize embeddings
 embeddings = get_embeddings()
 
+# Check if data folder has valid files
+def has_valid_data_files(data_path):
+    """Check if data folder has .txt, .md, or .json files."""
+    if not os.path.exists(data_path):
+        return False
+    return any(f.endswith(('.txt', '.md', '.json')) for f in os.listdir(data_path))
+
 # Handle rebuild if needed
-if needs_rebuild and os.path.exists(DATA_PATH) and os.listdir(DATA_PATH):
-    if rebuild_reason == "changed":
+if needs_rebuild and has_valid_data_files(DATA_PATH):
+    if rebuild_reason == "manual":
+        st.info("🔄 **Manual rebuild requested.** Rebuilding knowledge base...")
+    elif rebuild_reason == "changed":
         st.info("📁 **Data folder changes detected!** Auto-rebuilding knowledge base...")
     elif rebuild_reason == "sync":
         st.info("🔄 **Syncing vector store with data folder...**")
     elif rebuild_reason == "initial":
         st.info("🚀 **Building initial knowledge base...**")
     
-    # Clear cache
+    # Clear cache first
     load_vector_store.clear()
+    
+    # Clean old vector store for fresh rebuild (except for initial build)
+    if rebuild_reason != "initial" and os.path.exists(DB_PATH):
+        import shutil
+        try:
+            shutil.rmtree(DB_PATH)
+            st.write("🗑️ Cleared old vector store for fresh rebuild.")
+        except Exception as e:
+            st.warning(f"Could not clear old vector store: {e}")
     
     # Run the pipeline with full visualization
     vector_store = build_vector_store(DATA_PATH, DB_PATH)
@@ -205,9 +223,12 @@ if needs_rebuild and os.path.exists(DATA_PATH) and os.listdir(DATA_PATH):
         write_stored_hash(current_hash)
         st.session_state["last_data_hash"] = current_hash
         st.balloons()
+        st.success("✅ Vector store rebuilt successfully!")
+    else:
+        st.error("❌ Failed to rebuild vector store. Check the logs for details.")
 else:
     # Load existing vector store or None
-    if os.path.exists(DB_PATH) and current_hash != "empty":
+    if os.path.exists(DB_PATH) and os.path.exists(os.path.join(DB_PATH, "chroma.sqlite3")) and current_hash != "empty":
         vector_store = load_vector_store(embeddings, DB_PATH, current_hash)
         st.session_state["last_data_hash"] = current_hash
     else:
@@ -215,7 +236,7 @@ else:
 
 # Show build button if no vector store and data exists
 if vector_store is None and not needs_rebuild:
-    if os.path.exists(DATA_PATH) and os.listdir(DATA_PATH):
+    if has_valid_data_files(DATA_PATH):
         st.info("👈 Click **'Rebuild Vector Store'** in the sidebar to initialize the AI.")
     else:
         st.warning("⚠️ No data found in `app/data/`. Please upload files or add `.txt`/`.md` files to the folder.")

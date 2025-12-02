@@ -22,7 +22,7 @@ def build_vector_store(data_path, db_path):
         st.write(f"Scanning `{data_path}` for documents...")
         print("\\n--- [MLOps] Stage 1: Data Ingestion ---")
         documents = []
-        for ext in ["*.md", "*.txt"]:
+        for ext in ["*.md", "*.txt", "*.json"]:
             try:
                 loader = DirectoryLoader(
                     data_path, 
