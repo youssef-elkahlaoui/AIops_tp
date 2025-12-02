@@ -17,7 +17,7 @@ def setup_chat_interface(vector_store):
     
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.0-flash-lite')
+        model = genai.GenerativeModel('models/gemini-flash-lite-latest')
     except Exception as e:
         st.error(f"Failed to configure Gemini: {e}")
         return
@@ -43,25 +43,32 @@ def setup_chat_interface(vector_store):
                 docs = vector_store.similarity_search(prompt, k=3)
                 context = "\n\n".join([doc.page_content for doc in docs])
                 
-                # System Prompt for Multilingual Support
-                full_prompt = f"""You are an expert assistant for ENSA Al Hoceima (École Nationale des Sciences Appliquées d'Al Hoceima).
-Your goal is to provide helpful, accurate answers about the school, its programs, departments, student life, and related topics.
+                # System Prompt for Multilingual Support + General Conversation
+                full_prompt = f"""You are a friendly AI assistant for ENSA Al Hoceima (École Nationale des Sciences Appliquées d'Al Hoceima).
 
 INSTRUCTIONS:
-1. ALWAYS base your answers on the provided context below.
-2. Detect the language of the user's question (French, English, or Arabic/Darija) and reply in the SAME language.
-3. If the context contains relevant information, provide a clear and complete answer.
-4. If the context does NOT contain enough information to answer, say "I don't have enough information about that" in the user's language.
-5. Be friendly and helpful.
+1. Detect the language of the user's message (French, English, or Arabic/Darija) and reply in the SAME language.
+
+2. For GREETINGS and GENERAL CONVERSATION (like "hi", "hello", "how are you", "thank you", "bonjour", "salut", "merci", etc.):
+   - Respond naturally and friendly
+   - You can introduce yourself as the ENSA Al Hoceima AI Assistant
+   - No need to use the context for these
+
+3. For QUESTIONS ABOUT ENSA (programs, departments, student life, location, history, etc.):
+   - Use ONLY the provided context to answer
+   - If the context contains relevant information, provide a clear and complete answer
+   - If the context does NOT contain enough information, say "I don't have enough information about that in my knowledge base" in the user's language
+
+4. Be helpful, friendly, and concise.
 
 CONTEXT FROM KNOWLEDGE BASE:
 ---
 {context}
 ---
 
-USER QUESTION: {prompt}
+USER MESSAGE: {prompt}
 
-YOUR ANSWER:"""
+YOUR RESPONSE:"""
                 
                 try:
                     response = model.generate_content(full_prompt)
@@ -73,6 +80,11 @@ YOUR ANSWER:"""
                 st.session_state.messages.append({"role": "assistant", "content": result})
                 
                 # Show sources (Optional, good for debugging/learning)
-                with st.expander("View Source Documents"):
-                    for doc in docs:
-                        st.write(doc.page_content)
+                with st.expander("📚 View Source Documents"):
+                    if docs:
+                        for i, doc in enumerate(docs, 1):
+                            st.markdown(f"**Source {i}:**")
+                            st.write(doc.page_content[:500] + "..." if len(doc.page_content) > 500 else doc.page_content)
+                            st.divider()
+                    else:
+                        st.write("No relevant documents found.")

@@ -117,31 +117,83 @@ with st.sidebar:
     
     # Manual Rebuild Button
     rebuild_clicked = st.button("🔄 Rebuild Vector Store")
+    
+    # Show sync status
+    st.divider()
+    st.subheader("📊 Status")
+    
+    # Data folder info
+    data_files = [f for f in os.listdir(DATA_PATH) if f.endswith(('.txt', '.md'))] if os.path.exists(DATA_PATH) else []
+    st.caption(f"**Data Files:** {len(data_files)}")
+    
+    # Vector store status
+    vs_exists = os.path.exists(os.path.join(DB_PATH, "chroma.sqlite3"))
+    if vs_exists:
+        st.caption("**Vector Store:** ✅ Ready")
+    else:
+        st.caption("**Vector Store:** ⚠️ Not built")
 
 # Calculate current data folder hash
 current_hash = get_data_folder_hash(DATA_PATH)
-stored_hash = st.session_state.get("last_data_hash", None)
+
+# Get stored hash from vector store metadata file (persists across sessions)
+HASH_FILE = os.path.join(DB_PATH, ".data_hash")
+
+def read_stored_hash():
+    """Read the stored data hash from disk."""
+    if os.path.exists(HASH_FILE):
+        with open(HASH_FILE, 'r') as f:
+            return f.read().strip()
+    return None
+
+def write_stored_hash(hash_value):
+    """Write the data hash to disk for persistence."""
+    os.makedirs(DB_PATH, exist_ok=True)
+    with open(HASH_FILE, 'w') as f:
+        f.write(hash_value)
+
+stored_hash = read_stored_hash()
 
 # Determine if we need to rebuild
 needs_rebuild = False
 auto_rebuild = False
+rebuild_reason = ""
 
 # Check for manual rebuild or upload trigger
 if rebuild_clicked or st.session_state.get("trigger_rebuild", False):
     needs_rebuild = True
+    rebuild_reason = "manual"
     st.session_state["trigger_rebuild"] = False
-elif stored_hash is not None and stored_hash != current_hash:
-    # Data folder changed externally - auto rebuild
-    needs_rebuild = True
-    auto_rebuild = True
+elif current_hash != "empty":
+    # Check if vector store exists
+    vector_store_exists = os.path.exists(DB_PATH) and os.path.exists(os.path.join(DB_PATH, "chroma.sqlite3"))
+    
+    if not vector_store_exists:
+        # No vector store yet - need initial build
+        needs_rebuild = True
+        rebuild_reason = "initial"
+    elif stored_hash is None:
+        # Vector store exists but no hash file - need to sync
+        needs_rebuild = True
+        rebuild_reason = "sync"
+        auto_rebuild = True
+    elif stored_hash != current_hash:
+        # Data folder changed - auto rebuild
+        needs_rebuild = True
+        rebuild_reason = "changed"
+        auto_rebuild = True
 
 # Initialize embeddings
 embeddings = get_embeddings()
 
 # Handle rebuild if needed
 if needs_rebuild and os.path.exists(DATA_PATH) and os.listdir(DATA_PATH):
-    if auto_rebuild:
+    if rebuild_reason == "changed":
         st.info("📁 **Data folder changes detected!** Auto-rebuilding knowledge base...")
+    elif rebuild_reason == "sync":
+        st.info("🔄 **Syncing vector store with data folder...**")
+    elif rebuild_reason == "initial":
+        st.info("🚀 **Building initial knowledge base...**")
     
     # Clear cache
     load_vector_store.clear()
@@ -150,15 +202,14 @@ if needs_rebuild and os.path.exists(DATA_PATH) and os.listdir(DATA_PATH):
     vector_store = build_vector_store(DATA_PATH, DB_PATH)
     
     if vector_store:
+        write_stored_hash(current_hash)
         st.session_state["last_data_hash"] = current_hash
         st.balloons()
 else:
     # Load existing vector store or None
     if os.path.exists(DB_PATH) and current_hash != "empty":
         vector_store = load_vector_store(embeddings, DB_PATH, current_hash)
-        # Store the hash if not already stored
-        if "last_data_hash" not in st.session_state:
-            st.session_state["last_data_hash"] = current_hash
+        st.session_state["last_data_hash"] = current_hash
     else:
         vector_store = None
 
