@@ -1,8 +1,8 @@
-streamlit
-langchain-community
-langchain-text-splitters
-langchain-chroma
-chromadb
-python-dotenv
-sentence-transformers
-google-generativeai
+streamlit # Streamlit framework for building web apps
+langchain-community # Community extensions for LangChain
+langchain-text-splitters # Tools for splitting text in LangChain
+langchain-chroma # Chroma vector store integration for LangChain
+chromadb # Chroma vector database
+python-dotenv # Load environment variables from .env files
+sentence-transformers # Sentence Transformers for embeddings
+google-generativeai # Google Generative AI SDK
