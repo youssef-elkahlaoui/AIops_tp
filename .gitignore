@@ -88,13 +88,6 @@ desktop.ini
 # ===========================
 *.log
 docker-compose.override.yml
-Dockerfile
-Dockerfile.*
-docker-compose.yml
-docker-compose.yaml
-docker-compose*.yml
-docker-compose*.yaml
-
 # ===========================
 # Temporary Files
 # ===========================
