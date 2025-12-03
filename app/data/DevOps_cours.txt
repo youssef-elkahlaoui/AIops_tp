@@ -1,2 +1,3 @@
-Le cours de MLOps est dispensé le mercredi matin à 9 h.
+Le cours de DevOps est dispensé le mercredi matin à 9 h.
 Le professeur responsable est Dr. Bahri.
+Le cours inclut des TPs sur Docker, Kubernetes et CI/CD.

@@ -95,7 +95,7 @@ def build_vector_store(data_path, db_path):
         st.write(f"Processing {total_chunks} chunks...")
         
         try:
-            # Create the vector store with all documents
+            # Create the vector store with all documents (using fresh directory)
             if total_chunks > 0:
                 vector_store = Chroma.from_documents(
                     documents=chunks, 

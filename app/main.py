@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import shutil
 import hashlib
 from pathlib import Path
 from langchain_chroma import Chroma
@@ -204,22 +205,55 @@ if needs_rebuild and has_valid_data_files(DATA_PATH):
     elif rebuild_reason == "initial":
         st.info("🚀 **Building initial knowledge base...**")
     
-    # Clear cache first
+    # Clear Streamlit cache to release any cached vector store connections
     load_vector_store.clear()
     
-    # Clean old vector store for fresh rebuild (except for initial build)
-    if rebuild_reason != "initial" and os.path.exists(DB_PATH):
-        import shutil
-        try:
-            shutil.rmtree(DB_PATH)
-            st.write("🗑️ Cleared old vector store for fresh rebuild.")
-        except Exception as e:
-            st.warning(f"Could not clear old vector store: {e}")
+    # Force Python to release all references and file handles
+    import gc
+    gc.collect()
     
-    # Run the pipeline with full visualization
-    vector_store = build_vector_store(DATA_PATH, DB_PATH)
+    # Use a fresh temporary directory for the new build, then swap
+    import time
+    temp_db_path = DB_PATH + "_new_" + str(int(time.time()))
+    old_db_path = DB_PATH + "_old_" + str(int(time.time()))
+    
+    # Ensure the temp directory exists
+    os.makedirs(temp_db_path, exist_ok=True)
+    st.write(f"📂 Building in temporary location...")
+    
+    # Run the pipeline with the new temp directory
+    try:
+        vector_store = build_vector_store(DATA_PATH, temp_db_path)
+    except Exception as e:
+        st.error(f"Pipeline error: {str(e)}")
+        vector_store = None
+        # Cleanup temp dir on failure
+        if os.path.exists(temp_db_path):
+            shutil.rmtree(temp_db_path, ignore_errors=True)
     
     if vector_store:
+        # Swap directories: rename old to backup, new to current
+        try:
+            if os.path.exists(DB_PATH):
+                os.rename(DB_PATH, old_db_path)
+            os.rename(temp_db_path, DB_PATH)
+            
+            # Clean up old directory (might fail if locked, that's ok)
+            shutil.rmtree(old_db_path, ignore_errors=True)
+            
+            # Also clean up any other old temp directories
+            parent_dir = os.path.dirname(DB_PATH)
+            for item in os.listdir(parent_dir):
+                if item.startswith("chroma_db_") and os.path.isdir(os.path.join(parent_dir, item)):
+                    shutil.rmtree(os.path.join(parent_dir, item), ignore_errors=True)
+            
+            # Reload the vector store from the new location
+            vector_store = Chroma(persist_directory=DB_PATH, embedding_function=embeddings)
+            
+            st.write("🗑️ Swapped to new vector store.")
+        except Exception as e:
+            st.warning(f"Note: {e}")
+        
         write_stored_hash(current_hash)
         st.session_state["last_data_hash"] = current_hash
         st.balloons()
