@@ -4,6 +4,32 @@
 
 Mettre en pratique la conteneurisation et l'orchestration d'une application de Génération Augmentée par Récupération (RAG) à l'aide de Docker. Ce TP vous permettra de comprendre comment déployer une application d'intelligence artificielle moderne en utilisant les meilleures pratiques DevOps.
 
+### Structure des dossiers et fichiers
+
+```
+AIops-RAG/
+├── app/
+│   ├── main.py                      # Point d'entrée principal de l'application
+│   ├── data/                        # Dossier des documents sources
+│   │   ├── DevOps_cours.txt         # Informations sur le cours DevOps
+│   │   ├── ensa_about.txt           # Description de l'ENSA
+│   │   ├── ensa_programs.md         # Programmes d'études (format Markdown)
+│   │   └── student_life.txt         # Vie étudiante et activités
+│   ├── chroma_db/                   # Base de données vectorielle (générée)
+│   │   ├── chroma.sqlite3           # Stockage SQLite des métadonnées
+│   │   └── index/                   # Index de recherche vectorielle
+│   └── utils/                       # Modules utilitaires
+│       ├── chat_interface.py        # Interface utilisateur Streamlit
+│       ├── embeddings.py            # Gestion des embeddings (vecteurs)
+│       └── rag_pipeline.py          # Logique du pipeline RAG
+├── docker-compose.yml               # Configuration d'orchestration Docker
+├── Dockerfile                       # Instructions de construction de l'image
+├── requirements.txt                 # Dépendances Python
+├── .env.example                     # Modèle de fichier d'environnement
+├── .env                             # Variables d'environnement (clé API)
+└── TP.md                            # Documentation du TP
+```
+
 ## Qu'est-ce que le RAG ?
 
 **RAG (Retrieval-Augmented Generation)** est une technique d'IA qui combine :
